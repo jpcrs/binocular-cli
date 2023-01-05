@@ -37,10 +37,10 @@ pub struct Cli {
 pub enum SubCommands {
 	History {
 		#[arg(short, value_parser)]
-		path: Option<String>,
+		path: PathBuf,
 
 		#[arg(short, value_parser)]
-		file: Option<String>
+		file: PathBuf
 	}
 }
 
@@ -53,39 +53,22 @@ struct Editor {
     /// Open result on code-insiders
     #[arg(short, long, group = "editor")]
     insiders: bool,
-
-    /// Open result on vim
-    #[arg(short, long, group = "editor")]
-    vim: bool,
-
-    /// Open result on explorer
-    #[arg(short, long, group = "editor")]
-    explorer: bool,
 }
 
 impl Editor {
     pub fn parse_to_enum(&self) -> EditorEnum {
         if self.code {
             return EditorEnum::Code;
-        } else if self.insiders {
-            return EditorEnum::Insiders;
-        } else if self.vim {
-            return EditorEnum::Vim;
-        } else if self.explorer {
-            return EditorEnum::Explorer;
-        } else {
-            return EditorEnum::Echo;
-        }
+        } 
+
+        return EditorEnum::Insiders;
     }
 }
 
 #[derive(Debug)]
 pub enum EditorEnum {
     Code,
-    Insiders,
-    Vim,
-    Explorer,
-    Echo,
+    Insiders
 }
 
 #[derive(Args, Debug)]
@@ -97,29 +80,14 @@ struct ShortcutEditor {
     /// Shortcut opens on code-insiders
     #[arg(long, group = "shortcuteditor")]
     shortcut_insiders: bool,
-
-    /// Shortcut opens on vim
-    #[arg(long, group = "shortcuteditor")]
-    shortcut_vim: bool,
-
-    /// Shortcut opens on explorer
-    #[arg(long, group = "shortcuteditor")]
-    shortcut_explorer: bool,
 }
 
 impl ShortcutEditor {
     pub fn parse_to_enum(&self) -> EditorEnum {
         if self.shortcut_code {
             return EditorEnum::Code;
-        } else if self.shortcut_insiders {
-            return EditorEnum::Insiders;
-        } else if self.shortcut_vim {
-            return EditorEnum::Vim;
-        } else if self.shortcut_explorer {
-            return EditorEnum::Vim;
-        } else {
-            return EditorEnum::Echo;
         }
+        return EditorEnum::Insiders;
     }
 }
 
@@ -160,7 +128,9 @@ impl Cli {
             }
             return final_paths;
         }
-        final_paths.push(curr_path);
+        if let None = self.history {
+            final_paths.push(curr_path);
+        }
         return final_paths;
     }
     

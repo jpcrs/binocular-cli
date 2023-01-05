@@ -2,10 +2,10 @@ use clap::Parser;
 use commands::Binocular;
 use std::{
     ffi::OsStr,
-    process::Command,
+    process::Command, path::PathBuf, io::{BufReader, BufRead},
 };
 
-use crate::cli::{Cli, ParsedCli};
+use crate::cli::{Cli, ParsedCli, SubCommands};
 
 mod consts;
 mod commands;
@@ -24,16 +24,14 @@ fn fzf_command(binocular: Binocular, cli: &ParsedCli) -> Command {
 
     let (open_editor, open_new_editor) = match cli.shortcut_editor {
         cli::EditorEnum::Code => (consts::VSCODE_EDITOR_COMMAND, consts::VSCODE_EDITOR_COMMAND_NEW_WINDOW),
-        cli::EditorEnum::Insiders => (consts::INSIDERS_EDITOR_COMMAND, consts::INSIDERS_EDITOR_COMMAND_NEW_WINDOW),
-        cli::EditorEnum::Vim => (consts::VSCODE_EDITOR_COMMAND, consts::VSCODE_EDITOR_COMMAND_NEW_WINDOW),
-        cli::EditorEnum::Explorer => (consts::VSCODE_EDITOR_COMMAND, consts::VSCODE_EDITOR_COMMAND_NEW_WINDOW),
-        cli::EditorEnum::Echo => (consts::VSCODE_EDITOR_COMMAND, consts::VSCODE_EDITOR_COMMAND_NEW_WINDOW),
+        cli::EditorEnum::Insiders => (consts::INSIDERS_EDITOR_COMMAND, consts::INSIDERS_EDITOR_COMMAND_NEW_WINDOW)
     };
 
     let std_out = cmd.spawn().unwrap().stdout.expect("Failed to get the command stdout");
     
     let mut args: Vec<&OsStr> = consts::FZF_PARAMS.iter().map(|f| OsStr::new(f)).collect();
     
+    let enter_line = format!("--bind=Enter:execute-silent({})+abort", open_editor);
     let prompt_line = format!("--prompt={}", prompt);
     let open_editor_line = format!("--bind=ctrl-o:execute-silent({})+abort", open_editor);
     let open_editor_new_line = format!("--bind=ctrl-n:execute-silent({})+abort", open_new_editor);
@@ -43,12 +41,96 @@ fn fzf_command(binocular: Binocular, cli: &ParsedCli) -> Command {
     let preview_line = format!("--preview={}", preview);
     let query_line = format!("-q {}", &cli.query);
 
+    args.push(OsStr::new(&enter_line));
     args.push(OsStr::new(&prompt_line));
     args.push(OsStr::new(&open_editor_line));
     args.push(OsStr::new(&open_editor_new_line));
     args.push(OsStr::new(&grep_line));
     args.push(OsStr::new(&file_line));
     args.push(OsStr::new(&directory_line));
+    args.push(OsStr::new(&preview_line));
+    args.push(OsStr::new(&query_line));
+
+    let mut fzf = Command::new("fzf");
+    fzf.args(args).stdin(std_out);
+    return fzf;
+}
+
+fn history_command(binocular: Binocular, path: &PathBuf, file: &PathBuf, cli: &ParsedCli) -> Command {
+    let test = binocular.parse_grep_command();
+    println!("Testtttttttttttttt: {}", test);
+
+    let mut grep_cmd = binocular.grep_command;
+    let mut folder_cmd = binocular.folder_command;
+    let (open_editor, open_new_editor) = match cli.shortcut_editor {
+        cli::EditorEnum::Code => (consts::VSCODE_EDITOR_COMMAND, consts::VSCODE_EDITOR_COMMAND_NEW_WINDOW),
+        cli::EditorEnum::Insiders => (consts::INSIDERS_EDITOR_COMMAND, consts::INSIDERS_EDITOR_COMMAND_NEW_WINDOW)
+    };
+    let formated_file = file.to_str().map(|s| s.replace(" ", "%20")).unwrap_or(String::new());
+    println!("File: {}", formated_file);
+
+    let mut rg_cmd = Command::new("rg");
+
+    let mut rg_args: Vec<&OsStr> = vec![];
+    rg_args.push(OsStr::new("-l"));
+    rg_args.push(OsStr::new("-g"));
+    rg_args.push(OsStr::new("entries.json"));
+    rg_args.push(OsStr::new(&formated_file));
+    rg_args.push(OsStr::new(&path));
+
+    rg_cmd.args(rg_args);
+
+    let rg_output = rg_cmd.output().unwrap();
+    if rg_output.status.success() {
+        let reader = BufReader::new(rg_output.stdout.as_slice());
+        let first_line = reader.lines().next().map(|l| l.unwrap()).unwrap_or(String::new());
+        let pathbuf = PathBuf::from(first_line);
+        let folder = pathbuf.parent().unwrap().to_string_lossy().to_string();
+        println!("Foldeerrrr: {}", folder);
+
+        grep_cmd.arg(folder);
+
+        let std_out = grep_cmd.spawn().unwrap().stdout.expect("Failed to get the command stdout");
+
+        let mut args: Vec<&OsStr> = consts::FZF_PARAMS.iter().map(|f| OsStr::new(f)).collect();
+        
+        let enter_line = format!("--bind=Enter:execute-silent({})+abort", open_editor);
+        let prompt_line = format!("--prompt={}", consts::RG_PROMPT);
+        let open_editor_line = format!("--bind=ctrl-o:execute-silent({})+abort", open_editor);
+        let open_editor_new_line = format!("--bind=ctrl-n:execute-silent({})+abort", open_new_editor);
+        let preview_line = format!("--preview={}", consts::RG_PREVIEW);
+        let query_line = format!("-q {}", &cli.query);
+
+        args.push(OsStr::new(&enter_line));
+        args.push(OsStr::new(&prompt_line));
+        args.push(OsStr::new(&open_editor_line));
+        args.push(OsStr::new(&open_editor_new_line));
+        args.push(OsStr::new(&preview_line));
+        args.push(OsStr::new(&query_line));
+
+        let mut fzf = Command::new("fzf");
+        fzf.args(args).stdin(std_out);
+        return fzf;
+    } else {
+        eprintln!("Command failed with status: {}", rg_output.status);
+    }
+
+    let std_out = folder_cmd.spawn().unwrap().stdout.expect("Failed to get the command stdout");
+
+
+    let mut args: Vec<&OsStr> = consts::FZF_PARAMS.iter().map(|f| OsStr::new(f)).collect();
+    
+    let enter_line = format!("--bind=Enter:execute-silent({})+abort", open_editor);
+    let prompt_line = format!("--prompt={}", consts::RG_PROMPT);
+    let open_editor_line = format!("--bind=ctrl-o:execute-silent({})+abort", open_editor);
+    let open_editor_new_line = format!("--bind=ctrl-n:execute-silent({})+abort", open_new_editor);
+    let preview_line = format!("--preview={}", consts::RG_PREVIEW);
+    let query_line = format!("-q {}", &cli.query);
+
+    args.push(OsStr::new(&enter_line));
+    args.push(OsStr::new(&prompt_line));
+    args.push(OsStr::new(&open_editor_line));
+    args.push(OsStr::new(&open_editor_new_line));
     args.push(OsStr::new(&preview_line));
     args.push(OsStr::new(&query_line));
 
@@ -65,11 +147,27 @@ fn main() {
     let binocular = commands::Binocular::new(&parsed_cli.path);
     println!("{}", binocular.parse_grep_command());
 
-    let fzf = fzf_command(binocular, &parsed_cli)
-        .spawn()
-        .unwrap();
+    if let Some(history) = parsed_cli.history {
+        match history {
+            SubCommands::History { path, file } => {
+                // println!("'myapp add' was used, name is: {:?}", name)
+                let fzf = history_command(binocular, path, file, &parsed_cli)
+                    .spawn()
+                    .unwrap();
 
-    let output = fzf.wait_with_output().unwrap();
-    let result = String::from_utf8(output.stdout).unwrap();
-    println!("{}", result);
+                fzf.wait_with_output().unwrap();
+            }
+        }
+    }
+    else {
+        let fzf = fzf_command(binocular, &parsed_cli)
+            .spawn()
+            .unwrap();
+
+        fzf.wait_with_output().unwrap();
+    }
+
+
+    // let result = String::from_utf8(output.stdout).unwrap();
+    // println!("{}", result);
 }
