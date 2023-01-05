@@ -27,6 +27,21 @@ pub struct Cli {
     /// Code
     #[clap(flatten)]
     shortcut_editor: ShortcutEditor,
+
+    #[command(subcommand)]
+    history: Option<SubCommands>,
+}
+
+#[derive(Debug)]
+#[derive(clap::Subcommand)]
+pub enum SubCommands {
+	History {
+		#[arg(short, value_parser)]
+		path: Option<String>,
+
+		#[arg(short, value_parser)]
+		file: Option<String>
+	}
 }
 
 #[derive(Args, Debug)]
@@ -153,7 +168,7 @@ impl Cli {
         if let Some(query) = &self.query {
             return String::from(query);
         }
-        return String::from("a");
+        return String::from("");
     }
 }
 
@@ -166,16 +181,17 @@ pub enum ModeEnum {
 
 #[derive(Debug)]
 #[allow(dead_code)]
-pub struct ParsedCli {
+pub struct ParsedCli<'a> {
     pub editor: EditorEnum,
     pub shortcut_editor: EditorEnum,
     pub path: Vec<PathBuf>,
     pub query: String,
     pub ignore_line: bool,
-    pub mode: ModeEnum
+    pub mode: ModeEnum,
+    pub history: &'a Option<SubCommands>
 }
 
-impl ParsedCli {
+impl<'a> ParsedCli<'a> {
     pub fn new(cli: &Cli) -> ParsedCli {
         ParsedCli {
             editor: cli.editor.parse_to_enum(),
@@ -183,7 +199,8 @@ impl ParsedCli {
             path: cli.build_paths(),
             query: cli.build_query(),
             ignore_line: cli.ignore_line,
-            mode: cli.mode.parse_to_enum()
+            mode: cli.mode.parse_to_enum(),
+            history: &cli.history
         }
     }
 }

@@ -9,6 +9,7 @@ use std::{
 #[path = "consts.rs"]
 mod consts;
 
+#[derive(Debug)]
 pub struct Binocular {
     pub grep_command: Command,
     pub file_command: Command,
@@ -77,7 +78,12 @@ impl Binocular {
         let mut s = String::new();
         for arg in cmd.get_args().into_iter() {
             if let Some(str) = arg.to_str() {
-                s.push_str(str);
+                if str.is_empty() {
+                    s.push_str("''");
+                }
+                else {
+                    s.push_str(str);
+                }
                 s.push_str(" ");
             }
         }

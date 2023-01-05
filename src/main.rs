@@ -1,4 +1,5 @@
 use clap::Parser;
+use commands::Binocular;
 use std::{
     ffi::OsStr,
     process::Command,
@@ -10,23 +11,46 @@ mod consts;
 mod commands;
 mod cli;
 
-fn fzf_command(mut cmd: Command, query: &String) -> Command {
+fn fzf_command(binocular: Binocular, cli: &ParsedCli) -> Command {
+    let grep_cmd = binocular.parse_grep_command();
+    let file_cmd = binocular.parse_file_command();
+    let folder_cmd = binocular.parse_folder_command();
+
+    let (mut cmd, prompt, preview) = match cli.mode {
+        cli::ModeEnum::Grep => (binocular.grep_command, consts::RG_PROMPT, consts::RG_PREVIEW),
+        cli::ModeEnum::File => (binocular.file_command, consts::FILES_PROMPT, consts::FILES_PREVIEW),
+        cli::ModeEnum::Directory => (binocular.folder_command, consts::FOLDER_PROMPT, consts::FOLDER_PREVIEW),
+    };
+
+    let (open_editor, open_new_editor) = match cli.shortcut_editor {
+        cli::EditorEnum::Code => (consts::VSCODE_EDITOR_COMMAND, consts::VSCODE_EDITOR_COMMAND_NEW_WINDOW),
+        cli::EditorEnum::Insiders => (consts::INSIDERS_EDITOR_COMMAND, consts::INSIDERS_EDITOR_COMMAND_NEW_WINDOW),
+        cli::EditorEnum::Vim => (consts::VSCODE_EDITOR_COMMAND, consts::VSCODE_EDITOR_COMMAND_NEW_WINDOW),
+        cli::EditorEnum::Explorer => (consts::VSCODE_EDITOR_COMMAND, consts::VSCODE_EDITOR_COMMAND_NEW_WINDOW),
+        cli::EditorEnum::Echo => (consts::VSCODE_EDITOR_COMMAND, consts::VSCODE_EDITOR_COMMAND_NEW_WINDOW),
+    };
+
     let std_out = cmd.spawn().unwrap().stdout.expect("Failed to get the command stdout");
     
-    let q = "-q ".to_owned()+query;
-
     let mut args: Vec<&OsStr> = consts::FZF_PARAMS.iter().map(|f| OsStr::new(f)).collect();
+    
+    let prompt_line = format!("--prompt={}", prompt);
+    let open_editor_line = format!("--bind=ctrl-o:execute-silent({})+abort", open_editor);
+    let open_editor_new_line = format!("--bind=ctrl-n:execute-silent({})+abort", open_new_editor);
+    let grep_line = format!("--bind=ctrl-g:reload({} {{q}})+change-prompt({})+change-preview-window(50%)+change-preview({})+unbind(change,ctrl-r)+rebind(change,ctrl-f)+rebind(change,ctrl-d)", grep_cmd, consts::RG_PROMPT, consts::RG_PREVIEW);
+    let file_line = format!("--bind=ctrl-f:reload({})+change-prompt({})+change-preview-window(50%)+change-preview({})+unbind(change,ctrl-f)+rebind(change,ctrl-r)+rebind(change,ctrl-d)", file_cmd, consts::FILES_PROMPT, consts::FILES_PREVIEW);
+    let directory_line = format!("--bind=ctrl-d:reload({})+change-prompt({})+change-preview-window(hidden)+change-preview({})+unbind(change,ctrl-d)+rebind(change,ctrl-r)+rebind(change,ctrl-f)", folder_cmd, consts::FOLDER_PROMPT, consts::FOLDER_PREVIEW);
+    let preview_line = format!("--preview={}", preview);
+    let query_line = format!("-q {}", &cli.query);
 
-    args.push(OsStr::new("--prompt=updatemeeeeeeeee"));
-    args.push(OsStr::new("--bind=ctrl-o:execute-silent($$$COMMAND-TO-OPEN-VSCODE$$$)+abort"));
-    args.push(OsStr::new("--bind=ctrl-n:execute-silent($$$COMMAND-TO-OPEN-VSCODE-NEW-WINDOW$$$)+abort"));
-    args.push(OsStr::new("--bind=ctrl-g:reload($GREP_CMD {q})+change-prompt($GREP_PROMPT)+change-preview-window(50%)+change-preview($GREP_PREVIEW_STYLE)+unbind(change,ctrl-r)+rebind(change,ctrl-f)+rebind(change,ctrl-d)"));
-    args.push(OsStr::new("--bind=ctrl-f:reload($FILE_CMD)+change-prompt($FILE_PROMPT)+change-preview-window(50%)+change-preview($FILE_PREVIEW_STYLE)+unbind(change,ctrl-f)+rebind(change,ctrl-r)+rebind(change,ctrl-d)"));
-    args.push(OsStr::new("--bind=ctrl-d:reload($DIRECTORY_CMD)+change-prompt($DIRECTORY_PROMPT)+change-preview-window(hidden)+change-preview($DIRECTORY_PREVIEW_STYLE)+unbind(change,ctrl-d)+rebind(change,ctrl-r)+rebind(change,ctrl-f)"));
-    args.push(OsStr::new("--preview=bat --color=always {1} --highlight-line {2}"));
-    args.push(OsStr::new(&q));
-    // args.push(OsStr::new("-q"));
-    // args.push(OsStr::new(query));
+    args.push(OsStr::new(&prompt_line));
+    args.push(OsStr::new(&open_editor_line));
+    args.push(OsStr::new(&open_editor_new_line));
+    args.push(OsStr::new(&grep_line));
+    args.push(OsStr::new(&file_line));
+    args.push(OsStr::new(&directory_line));
+    args.push(OsStr::new(&preview_line));
+    args.push(OsStr::new(&query_line));
 
     let mut fzf = Command::new("fzf");
     fzf.args(args).stdin(std_out);
@@ -38,10 +62,10 @@ fn main() {
     let parsed_cli = ParsedCli::new(&cli);
     println!("{:?}", parsed_cli);
 
-    let commands = commands::Binocular::new(&parsed_cli.path);
-    println!("{}", commands.parse_grep_command());
+    let binocular = commands::Binocular::new(&parsed_cli.path);
+    println!("{}", binocular.parse_grep_command());
 
-    let fzf = fzf_command(commands.grep_command, &parsed_cli.query)
+    let fzf = fzf_command(binocular, &parsed_cli)
         .spawn()
         .unwrap();
 
