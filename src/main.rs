@@ -58,7 +58,6 @@ fn fzf_command(binocular: Binocular, cli: &ParsedCli) -> Command {
 
 fn history_command(binocular: Binocular, path: &PathBuf, file: &PathBuf, cli: &ParsedCli) -> Command {
     let test = binocular.parse_grep_command();
-    println!("Testtttttttttttttt: {}", test);
 
     let mut grep_cmd = binocular.grep_command;
     let mut folder_cmd = binocular.folder_command;
@@ -67,7 +66,6 @@ fn history_command(binocular: Binocular, path: &PathBuf, file: &PathBuf, cli: &P
         cli::EditorEnum::Insiders => (consts::INSIDERS_EDITOR_COMMAND, consts::INSIDERS_EDITOR_COMMAND_NEW_WINDOW)
     };
     let formated_file = file.to_str().map(|s| s.replace(" ", "%20")).unwrap_or(String::new());
-    println!("File: {}", formated_file);
 
     let mut rg_cmd = Command::new("rg");
 
@@ -86,7 +84,6 @@ fn history_command(binocular: Binocular, path: &PathBuf, file: &PathBuf, cli: &P
         let first_line = reader.lines().next().map(|l| l.unwrap()).unwrap_or(String::new());
         let pathbuf = PathBuf::from(first_line);
         let folder = pathbuf.parent().unwrap().to_string_lossy().to_string();
-        println!("Foldeerrrr: {}", folder);
 
         grep_cmd.arg(folder);
 
@@ -150,7 +147,6 @@ fn main() {
     if let Some(history) = parsed_cli.history {
         match history {
             SubCommands::History { path, file } => {
-                // println!("'myapp add' was used, name is: {:?}", name)
                 let fzf = history_command(binocular, path, file, &parsed_cli)
                     .spawn()
                     .unwrap();
@@ -166,8 +162,4 @@ fn main() {
 
         fzf.wait_with_output().unwrap();
     }
-
-
-    // let result = String::from_utf8(output.stdout).unwrap();
-    // println!("{}", result);
 }
