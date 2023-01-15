@@ -1,4 +1,4 @@
-use std::{process::Command, path::PathBuf};
+use std::{path::PathBuf, process::Command};
 
 use crate::helper;
 
@@ -16,27 +16,23 @@ const PARAMS: &'static [&str] = &[
     "--no-heading",
     "--color=always",
     "--smart-case",
-    ""
+    "",
 ];
-
 
 #[allow(dead_code)]
 pub struct FileContent {
     pub command: Command,
-    // pub parsed_command: String,
     pub preview: String,
-    pub prompt: String
+    pub prompt: String,
 }
 
-
 #[allow(dead_code)]
-impl  FileContent {
+impl FileContent {
     pub fn new(paths: &Vec<PathBuf>) -> Self {
         FileContent {
             command: helper::init_command(paths, "rg", PARAMS),
-            // parsed_command: helper::get_command_string(cmd),
             preview: String::from(PREVIEW),
-            prompt: String::from(PROMPT)
+            prompt: String::from(PROMPT),
         }
     }
 

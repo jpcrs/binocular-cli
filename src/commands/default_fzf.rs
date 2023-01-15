@@ -1,6 +1,8 @@
 use std::{ffi::OsStr, process::{Command, Stdio}};
 
-use crate::{cli::{ParsedCli, self}, file_content::FileContent, file_name::FileName, folder_name::FolderName, open_editor};
+use crate::cli::{ParsedCli, self};
+
+use super::{file_content::FileContent, file_name::FileName, folder_name::FolderName, open_editor};
 
 const HELP: &str = "--bind=ctrl-h:preview:printf '\
 '\"${YELLOW}shortcuts:\"'
@@ -11,11 +13,15 @@ const HELP: &str = "--bind=ctrl-h:preview:printf '\
 ''
 '\"${YELLOW}${BOLD}∆${NORMAL} ${GREEN}CTRL+d${NORMAL}    ${NORMAL}-- Change to folders mode\"'
 ''
-'\"${YELLOW}${BOLD}∆${NORMAL} ${GREEN}CTRL+o${NORMAL}    ${NORMAL}-- Open the file/folder in the defined editor.\"'
-              '\"${YELLOW}default: ${NORMAL}line=\\{2}; code -g \\{1}\\${line:-:\\{2}}\"'
-''
 '\"${YELLOW}${BOLD}∆${NORMAL} ${GREEN}CTRL+n${NORMAL}    ${NORMAL}-- Open the file/folder in a new editor window\"'
-              '\"${YELLOW}default: ${NORMAL}line=\\{2}; code -g -n \\{1}\\${line:-:\\{2}}\"'
+''
+'\"${YELLOW}Preview Shortcuts:\"'
+''
+'\"${YELLOW}${BOLD}∆${NORMAL} ${GREEN}shift+up${NORMAL}    ${NORMAL}-- Scroll preview up\"'
+''
+'\"${YELLOW}${BOLD}∆${NORMAL} ${GREEN}shift+down${NORMAL}    ${NORMAL}-- Scroll preview down\"'
+''
+'\"${YELLOW}${BOLD}∆${NORMAL} ${GREEN}CTRL+p${NORMAL}    ${NORMAL}-- Toggle preview\"'
 '";
 
 const FZF_PARAMS: &'static [&str] = &[
@@ -37,7 +43,7 @@ const FZF_PARAMS: &'static [&str] = &[
     "--delimiter=:"
 ];
 
-pub fn fzf_command2(file_content: &mut FileContent, file_name: &mut FileName, folder_name: &mut FolderName, cli: &ParsedCli) {
+pub fn exec_fzf(file_content: &mut FileContent, file_name: &mut FileName, folder_name: &mut FolderName, cli: &ParsedCli) {
     let (cmd, prompt, preview) = match cli.mode {
         cli::ModeEnum::Grep => file_content.get_command_info(),
         cli::ModeEnum::File => file_name.get_command_info(),
@@ -70,7 +76,6 @@ pub fn fzf_command2(file_content: &mut FileContent, file_name: &mut FileName, fo
     args.push(OsStr::new(&preview_line));
     args.push(OsStr::new(&preview_size));
     args.push(OsStr::new(&query_line));
-
 
     let mut fzf = Command::new("fzf")
         .args(args)

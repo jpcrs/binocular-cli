@@ -19,20 +19,17 @@ const PARAMS: &'static [&str] = &[
     ""
 ];
 
-pub struct FolderName<> {
+pub struct FolderName {
     pub command: Command,
-    // pub parsed_command: String,
     pub preview: String,
     pub prompt: String
 }
-
 
 #[allow(dead_code)]
 impl FolderName {
     pub fn new(paths: &Vec<PathBuf>) -> Self {
         FolderName {
-            command: helper::init_command(paths, "rg", PARAMS),
-            // parsed_command: helper::get_command_string(cmd),
+            command: helper::init_command(paths, "fd", PARAMS),
             preview: String::from(PREVIEW),
             prompt: String::from(PROMPT),
         }

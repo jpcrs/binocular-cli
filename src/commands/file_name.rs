@@ -21,18 +21,15 @@ const PARAMS: &'static [&str] = &[
 
 pub struct FileName {
     pub command: Command,
-    // pub parsed_command: String,
     pub preview: String,
     pub prompt: String
 }
-
 
 #[allow(dead_code)]
 impl FileName {
     pub fn new(paths: &Vec<PathBuf>) -> Self {
         FileName {
-            command: helper::init_command(paths, "rg", PARAMS),
-            // parsed_command: helper::get_command_string(cmd),
+            command: helper::init_command(paths, "fd", PARAMS),
             preview: String::from(PREVIEW),
             prompt: String::from(PROMPT)
         }

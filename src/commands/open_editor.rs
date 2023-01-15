@@ -9,8 +9,14 @@ pub fn open_on_editor(stdout: &mut ChildStdout, cli: &ParsedCli) {
     let mut selected = String::new();
     stdout.read_to_string(&mut selected).expect("failed to read from stdout");
 
+    if selected.is_empty()
+    {
+        return;
+    }
+
     let res = helper::get_file_and_line(selected);
 
+    println!("res: {}", res);
 
     let binding_code= &mut Command::new("code");
     let binding_insiders = &mut Command::new("code");
