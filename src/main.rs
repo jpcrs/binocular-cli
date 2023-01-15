@@ -7,7 +7,7 @@ use clap::Parser;
 use commands::Binocular;
 use std::{
     ffi::OsStr,
-    process::Command, path::PathBuf, io::{BufReader, BufRead},
+    process::{Command, Stdio}, path::PathBuf, io::{BufReader, BufRead, Read},
 };
 
 use crate::cli::{Cli, ParsedCli, SubCommands};
@@ -36,7 +36,7 @@ fn fzf_command(binocular: Binocular, cli: &ParsedCli) {
     
     let mut args: Vec<&OsStr> = consts::FZF_PARAMS.iter().map(|f| OsStr::new(f)).collect();
     
-    let enter_line = format!("--bind=Enter:execute-silent({})+abort", open_editor);
+    // let enter_line = format!("--bind=Enter:execute-silent({})+abort", open_editor);
     let prompt_line = format!("--prompt={}", prompt);
     let open_editor_line = format!("--bind=ctrl-o:execute-silent({})+abort", open_editor);
     let open_editor_new_line = format!("--bind=ctrl-n:execute-silent({})+abort", open_new_editor);
@@ -47,7 +47,7 @@ fn fzf_command(binocular: Binocular, cli: &ParsedCli) {
     let preview_size = format!("--preview-window=50%,+{{2}}+3/3,~3");
     let query_line = format!("-q {}", &cli.query);
 
-    args.push(OsStr::new(&enter_line));
+    // args.push(OsStr::new(&enter_line));
     args.push(OsStr::new(&prompt_line));
     args.push(OsStr::new(&open_editor_line));
     args.push(OsStr::new(&open_editor_new_line));
@@ -58,8 +58,32 @@ fn fzf_command(binocular: Binocular, cli: &ParsedCli) {
     args.push(OsStr::new(&preview_size));
     args.push(OsStr::new(&query_line));
 
-    let mut fzf = Command::new("fzf");
-    fzf.args(args).stdin(std_out).spawn().unwrap().wait_with_output().unwrap();
+    // let mut fzf = Command::new("fzf");
+    // fzf.args(args).stdin(std_out).spawn().unwrap().wait_with_output().unwrap();
+
+    let mut fzf = Command::new("fzf").args(args).stdin(std_out).stdout(Stdio::piped()).spawn().unwrap();
+
+    let stdout = fzf.stdout.as_mut().expect("failed to open stdout");
+
+    let mut selected = String::new();
+    stdout.read_to_string(&mut selected).expect("failed to read from stdout");
+
+    let res = get_file_and_line(selected);
+
+    Command::new("code").arg("-g").arg(res).spawn().unwrap().wait_with_output().unwrap();
+}
+
+pub fn get_file_and_line(path: String) -> String {
+    let first_colon_index = path.find(':').unwrap_or(path.len());
+    let second_colon_index = path[first_colon_index+1..].find(':').map(|i| i+first_colon_index+1).unwrap_or(path.len());
+
+    let file_name = &path[..first_colon_index];
+    let line_number = &path[first_colon_index+1..second_colon_index];
+    if line_number.is_empty() {
+        format!("{}:0", file_name)
+    } else {
+        format!("{}:{}", file_name, line_number)
+    }
 }
 
 fn history_command(binocular: Binocular, path: &PathBuf, file: &PathBuf, cli: &ParsedCli) {
