@@ -9,6 +9,7 @@ use commands::file_content::FileContent;
 use commands::file_name::FileName;
 use commands::folder_name::FolderName;
 use commands::history_fzf::exec_history_fzf;
+use commands::file_read::exec_file_read;
 use commands::history_rg::HistoryRg;
 use crate::cli::{Cli, ParsedCli, SubCommands};
 
@@ -20,13 +21,17 @@ fn main() {
     let cli = Cli::parse();
     let parsed_cli = ParsedCli::new(&cli);
 
-    if let Some(history) = parsed_cli.history {
+    if let Some(history) = parsed_cli.sub_commands {
         match history {
             SubCommands::History { path, file } => {
                 let file_content = &mut FileContent::new(&parsed_cli.path);
                 let history_rg = &mut HistoryRg::new(path, file);
                 exec_history_fzf(file_content, history_rg, &parsed_cli);
             }
+            SubCommands::ReadFile { file } => {
+                let file_content = &mut FileContent::new(&parsed_cli.path);
+                exec_file_read(file_content, file, &parsed_cli);
+            },
         }
     }
     else {

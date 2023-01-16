@@ -29,7 +29,7 @@ pub struct Cli {
     shortcut_editor: ShortcutEditor,
 
     #[command(subcommand)]
-    history: Option<SubCommands>,
+    sub_commands: Option<SubCommands>,
 }
 
 #[derive(Debug)]
@@ -39,6 +39,11 @@ pub enum SubCommands {
 		#[arg(short, value_parser)]
 		path: PathBuf,
 
+		#[arg(short, value_parser)]
+		file: PathBuf
+	},
+
+	ReadFile {
 		#[arg(short, value_parser)]
 		file: PathBuf
 	}
@@ -128,7 +133,7 @@ impl Cli {
             }
             return final_paths;
         }
-        if let None = self.history {
+        if let None = self.sub_commands {
             final_paths.push(curr_path);
         }
         return final_paths;
@@ -158,7 +163,7 @@ pub struct ParsedCli<'a> {
     pub query: String,
     pub ignore_line: bool,
     pub mode: ModeEnum,
-    pub history: &'a Option<SubCommands>
+    pub sub_commands: &'a Option<SubCommands>
 }
 
 impl<'a> ParsedCli<'a> {
@@ -170,7 +175,7 @@ impl<'a> ParsedCli<'a> {
             query: cli.build_query(),
             ignore_line: cli.ignore_line,
             mode: cli.mode.parse_to_enum(),
-            history: &cli.history
+            sub_commands: &cli.sub_commands
         }
     }
 }

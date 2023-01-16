@@ -6,3 +6,4 @@ pub mod folder_name;
 pub mod open_editor;
 pub mod history_rg;
 pub mod history_fzf;
+pub mod file_read;
