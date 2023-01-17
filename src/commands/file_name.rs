@@ -11,7 +11,7 @@ const PROMPT: &str = "Files > ";
 #[allow(dead_code)]
 const PARAMS: &'static [&str] = &[
     "-tf",
-    "-HI", 
+    "-H", 
     "--exclude",
     ".git",
     "--exclude",

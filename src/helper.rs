@@ -3,17 +3,25 @@ use std::{path::PathBuf, ffi::OsStr, process::{Command, Stdio}};
 pub fn get_file_and_line(path: String) -> String {
     let first_colon_index = path.find(':').map_or(path.len(), |i| i);
     if first_colon_index >= path.len() {
-        return format!("{}:0", path);
+        return format!("{}", &path[..path.len()-1]);
     }
     let second_colon_index = path[first_colon_index+1..].find(':').map_or(path.len(), |i| i+first_colon_index+1);
 
     let file_name = &path[..first_colon_index];
     let line_number = &path[first_colon_index+1..second_colon_index];
     if line_number.is_empty() {
-        format!("{}:0", file_name)
+        format!("{}:2", file_name)
     } else {
         format!("{}:{}", file_name, line_number)
     }
+}
+
+pub fn get_file_only(path: String) -> String {
+    let first_colon_index = path.find(':').map_or(path.len(), |i| i);
+    if first_colon_index >= path.len() {
+        return format!("{}", &path[..path.len()-1]);
+    }
+    return format!("{}", &path[..first_colon_index]);
 }
 
 pub fn init_command(paths: &Vec<PathBuf>, name: &str, params: &'static [&str]) -> Command {

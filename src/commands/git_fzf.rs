@@ -1,4 +1,4 @@
-use std::{ffi::OsStr, process::{Command, Stdio}};
+use std::{ffi::OsStr, process::{Command, Stdio}, io::{BufReader, BufRead, Write}};
 
 use crate::{cli::{ParsedCli, self}, helper};
 
@@ -35,7 +35,7 @@ const FZF_PARAMS: &'static [&str] = &[
     "--header= / CTRL-H (HELP!) /",
     "--color=hl:-1:underline,hl+:-1:underline:reverse",
     "--bind=change:top",
-    "--bind=shift-up:preview-page-up,shift-down:preview-page-down",
+    "--bind=shift-up:preview-up,shift-down:preview-down",
     "--bind=ctrl-p:toggle-preview",
     HELP,
     "--bind=ctrl-x:change-preview-window(80%,border-bottom|50%,border-bottom|20%,border-bottom|hidden|)",
@@ -43,7 +43,7 @@ const FZF_PARAMS: &'static [&str] = &[
     "--delimiter=:"
 ];
 
-pub fn exec_fzf(file_content: &mut FileContent, file_name: &mut FileName, folder_name: &mut FolderName, git_folders: &mut GitFolders, cli: &ParsedCli) {
+pub fn exec_git_fzf(file_content: &mut FileContent, file_name: &mut FileName, folder_name: &mut FolderName, git_folders: &mut GitFolders, cli: &ParsedCli) {
     let (cmd, prompt, preview) = match cli.mode {
         cli::ModeEnum::Grep => file_content.get_command_info(),
         cli::ModeEnum::File => file_name.get_command_info(),
@@ -56,10 +56,11 @@ pub fn exec_fzf(file_content: &mut FileContent, file_name: &mut FileName, folder
         cli::EditorEnum::Insiders => open_editor::INSIDERS_NEW_WINDOW
     };
 
+    let std_out = cmd.spawn().unwrap().stdout.expect("Failed to get the command stdout");
+    let reader = BufReader::new(std_out);
+
     println!("{}", helper::get_command_string(cmd));
 
-    let std_out = cmd.spawn().unwrap().stdout.expect("Failed to get the command stdout");
-    
     let mut args: Vec<&OsStr> = FZF_PARAMS.iter().map(|f| OsStr::new(f)).collect();
     
     let prompt_line = format!("--prompt={}", prompt);
@@ -82,10 +83,19 @@ pub fn exec_fzf(file_content: &mut FileContent, file_name: &mut FileName, folder
 
     let mut fzf = Command::new("fzf")
         .args(args)
-        .stdin(std_out)
+        .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn()
         .unwrap();
+
+    let fzf_stdin = fzf.stdin.as_mut().unwrap();
+    for line in reader.lines() {
+        let line = line.unwrap();
+        let modified_line = line.trim_end_matches(".git/");
+        fzf_stdin.write_all(modified_line.as_bytes()).unwrap();
+        fzf_stdin.write_all(b"\n").unwrap();
+    }
+    drop(fzf_stdin);
 
     let stdout = fzf.stdout.as_mut().expect("failed to open stdout");
     open_editor::open_on_editor(stdout, cli);

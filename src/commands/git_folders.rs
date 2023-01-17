@@ -3,35 +3,34 @@ use std::{process::Command, path::PathBuf};
 use crate::helper;
 
 #[allow(dead_code)]
-const PREVIEW: &str = "ls -al --color=always {}";
+const PREVIEW: &str = "bat --color=always {}README.md";
 
 #[allow(dead_code)]
-const PROMPT: &str = "Folder > ";
+const PROMPT: &str = "Git > ";
 
 #[allow(dead_code)]
 const PARAMS: &'static [&str] = &[
-    "-td",
-    "-H", 
-    "--exclude",
+    "--glob",
     ".git",
+    "-td", 
+    "-H",
     "--exclude",
-    "node_modules",
-    ""
+    "node_modules"
 ];
 
-pub struct FolderName {
+pub struct GitFolders {
     pub command: Command,
     pub preview: String,
     pub prompt: String
 }
 
 #[allow(dead_code)]
-impl FolderName {
+impl GitFolders {
     pub fn new(paths: &Vec<PathBuf>) -> Self {
-        FolderName {
+        GitFolders {
             command: helper::init_command(paths, "fd", PARAMS),
             preview: String::from(PREVIEW),
-            prompt: String::from(PROMPT),
+            prompt: String::from(PROMPT)
         }
     }
 

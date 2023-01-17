@@ -5,16 +5,16 @@ use crate::cli::{ParsedCli, self};
 use super::{file_content::FileContent, history_rg::HistoryRg, open_editor};
 
 const HELP: &str = "--bind=ctrl-h:preview:printf '\
-'\"${YELLOW}shortcuts:\"'
-'\"${YELLOW}${BOLD}∆${NORMAL} ${GREEN}CTRL+n${NORMAL}    ${NORMAL}-- Open the file/folder in a new editor window\"'
+'\"shortcuts:\"'
+'\"∆ CTRL+n    -- Open the file/folder in a new editor window\"'
 ''
-'\"${YELLOW}Preview Shortcuts:\"'
+'\"Preview Shortcuts:\"'
 ''
-'\"${YELLOW}${BOLD}∆${NORMAL} ${GREEN}shift+up${NORMAL}    ${NORMAL}-- Scroll preview up\"'
+'\"∆ shift+up    -- Scroll preview up\"'
 ''
-'\"${YELLOW}${BOLD}∆${NORMAL} ${GREEN}shift+down${NORMAL}    ${NORMAL}-- Scroll preview down\"'
+'\"∆ shift+down    -- Scroll preview down\"'
 ''
-'\"${YELLOW}${BOLD}∆${NORMAL} ${GREEN}CTRL+p${NORMAL}    ${NORMAL}-- Toggle preview\"'
+'\"∆ CTRL+p    -- Toggle preview\"'
 '";
 
 const FZF_PARAMS: &'static [&str] = &[
@@ -69,7 +69,7 @@ pub fn exec_history_fzf(file_content: &mut FileContent, history_rg: &mut History
 
         let stdout = fzf.stdout.as_mut().expect("failed to open stdout");
 
-        open_editor::open_on_editor(stdout, cli);
+        open_editor::diff_on_editor(stdout, cli, &history_rg.file);
     } else {
         eprintln!("Command failed with status: {}", rg_output.status);
     }

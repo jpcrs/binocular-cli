@@ -1,8 +1,8 @@
-use std::{process::{Command, Stdio}, ffi::OsStr, io::{BufReader, BufRead}, path::PathBuf};
+use std::{process::{Command, Stdio}, ffi::OsStr, path::PathBuf};
 
 use crate::cli::{ParsedCli, self};
 
-use super::{file_content::FileContent, history_rg::HistoryRg, open_editor};
+use super::{file_content::FileContent, open_editor};
 
 const HELP: &str = "--bind=ctrl-h:preview:printf '\
 '\"${YELLOW}shortcuts:\"'

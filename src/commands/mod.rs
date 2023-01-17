@@ -7,3 +7,5 @@ pub mod open_editor;
 pub mod history_rg;
 pub mod history_fzf;
 pub mod file_read;
+pub mod git_folders;
+pub mod git_fzf;

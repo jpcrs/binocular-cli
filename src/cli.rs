@@ -10,6 +10,10 @@ pub struct Cli {
 
     /// Mode
     #[clap(flatten)]
+    open_opt: OpenOpt,
+
+    /// Mode
+    #[clap(flatten)]
     mode: Mode,
 
     /// Query
@@ -109,6 +113,25 @@ struct Mode {
     /// Directory
     #[arg(short, long, group = "mode")]
     directory: bool,
+
+    /// Directory
+    #[arg(long, group = "mode")]
+    git: bool,
+}
+
+#[derive(Args, Debug)]
+struct OpenOpt {
+    /// Add
+    #[arg(short, long, group = "openOpt")]
+    add: bool,
+
+    /// New
+    #[arg(short, long, group = "openOpt")]
+    new: bool,
+
+    /// Reuse
+    #[arg(short, long, group = "openOpt")]
+    reuse: bool,
 }
 
 impl Mode {
@@ -117,8 +140,22 @@ impl Mode {
             return ModeEnum::File;
         } else if self.directory {
             return ModeEnum::Directory;
+        } else if self.git {
+            return ModeEnum::Projects;
         } else {
             return ModeEnum::Grep;
+        }
+    }
+}
+
+impl OpenOpt {
+    pub fn parse_to_enum(&self) -> OpenOptEnum {
+        if self.add {
+            return OpenOptEnum::Add;
+        } else if self.new {
+            return OpenOptEnum::New;
+        } else {
+            return OpenOptEnum::Reuse;
         }
     }
 }
@@ -148,10 +185,19 @@ impl Cli {
 }
 
 #[derive(Debug)]
+#[derive(PartialEq)]
 pub enum ModeEnum {
     Grep,
     File,
     Directory,
+    Projects,
+}
+
+#[derive(Debug)]
+pub enum OpenOptEnum {
+    Add,
+    New,
+    Reuse,
 }
 
 #[derive(Debug)]
@@ -163,6 +209,7 @@ pub struct ParsedCli<'a> {
     pub query: String,
     pub ignore_line: bool,
     pub mode: ModeEnum,
+    pub open_opt: OpenOptEnum,
     pub sub_commands: &'a Option<SubCommands>
 }
 
@@ -175,6 +222,7 @@ impl<'a> ParsedCli<'a> {
             query: cli.build_query(),
             ignore_line: cli.ignore_line,
             mode: cli.mode.parse_to_enum(),
+            open_opt: cli.open_opt.parse_to_enum(),
             sub_commands: &cli.sub_commands
         }
     }

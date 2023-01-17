@@ -4,7 +4,10 @@ This is the code of someone who tried to challenge the Borrow Checker without pr
 I started throwing code, during the battle, after immense suffering, I assumed defeat and gave up. Someday I'll refactor it, this is a promise, don't take this code seriously.
 */
 use clap::Parser;
-use commands::default_fzf::exec_fzf;
+use cli::ModeEnum;
+use commands::git_folders::GitFolders;
+use commands::git_fzf::exec_git_fzf;
+use commands::{default_fzf::exec_fzf};
 use commands::file_content::FileContent;
 use commands::file_name::FileName;
 use commands::folder_name::FolderName;
@@ -31,7 +34,7 @@ fn main() {
             SubCommands::ReadFile { file } => {
                 let file_content = &mut FileContent::new(&parsed_cli.path);
                 exec_file_read(file_content, file, &parsed_cli);
-            },
+            }
         }
     }
     else {
@@ -40,6 +43,12 @@ fn main() {
         let file_content = &mut FileContent::new(&parsed_cli.path);
         let file_name = &mut FileName::new(&parsed_cli.path);
         let folder_name = &mut FolderName::new(&parsed_cli.path);
-        exec_fzf(file_content, file_name, folder_name, &parsed_cli)
+        let git_folders = &mut GitFolders::new(&parsed_cli.path);
+        if parsed_cli.mode == ModeEnum::Projects {
+            exec_git_fzf(file_content, file_name, folder_name, git_folders, &parsed_cli);
+        }
+        else {
+            exec_fzf(file_content, file_name, folder_name, git_folders, &parsed_cli);
+        }
     }
 }
