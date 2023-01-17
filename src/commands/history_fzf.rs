@@ -18,25 +18,30 @@ const HELP: &str = "--bind=ctrl-h:preview:printf '\
 '";
 
 const FZF_PARAMS: &'static [&str] = &[
+    //info
     "--exact",
     "--ansi",
-    "--multi",
-    "--border",
-    "--info=hidden",
-    "--no-separator",
+    "--delimiter=:",
+    "--border-label=  History  ",
+    // search
     "--layout=reverse",
-    "--header= / CTRL-H (HELP!) /",
-    "--prompt=Grep > ",
-    "--color=hl:-1:underline,hl+:-1:underline:reverse",
-    "--bind=change:top",
-    "--bind=shift-up:preview-page-up,shift-down:preview-page-down",
+    "--border=sharp",
+    "--border-label-pos=4,top",
+    "--info=inline",
+    "--no-separator",
+    "--header=",
+    "--margin=2,2,2,2",
+    "--scrollbar=",
+    //preview
+    "--preview-window=border-sharp",
+    "--preview-label=  Preview  ",
+    "--preview-window=90%,+{2}+3/3,~3,down",
+    //bindings
+    "--bind=shift-up:preview-up,shift-down:preview-down",
     "--bind=ctrl-p:toggle-preview",
     HELP,
-    "--preview-window=90%,+{2}+3/3,~3,down",
-    "--no-height",
-    "--delimiter=:"
+    "--bind=ctrl-x:change-preview-window(80%,border-sharp|hidden|20%,border-sharp|50%,border-sharp|)"
 ];
-
 
 pub fn exec_history_fzf(file_content: &mut FileContent, history_rg: &mut HistoryRg, cli: &ParsedCli) {
     let new_window_cmd = match cli.editor {
@@ -63,7 +68,9 @@ pub fn exec_history_fzf(file_content: &mut FileContent, history_rg: &mut History
 
         args.push(OsStr::new(&open_editor_new_line));
         args.push(OsStr::new(&preview_line));
-        args.push(OsStr::new(&query_line));
+        if !cli.query.is_empty() {
+            args.push(OsStr::new(&query_line));
+        }
 
         let mut fzf = Command::new("fzf").args(args).stdin(std_out).stdout(Stdio::piped()).spawn().unwrap();
 

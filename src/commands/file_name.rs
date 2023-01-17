@@ -6,7 +6,7 @@ use crate::helper;
 const PREVIEW: &str = "bat --color=always {}";
 
 #[allow(dead_code)]
-const PROMPT: &str = "Files > ";
+const PROMPT: &str = "  Files  ";
 
 #[allow(dead_code)]
 const PARAMS: &'static [&str] = &[

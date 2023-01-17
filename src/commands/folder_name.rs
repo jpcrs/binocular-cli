@@ -6,7 +6,7 @@ use crate::helper;
 const PREVIEW: &str = "ls -al --color=always {}";
 
 #[allow(dead_code)]
-const PROMPT: &str = "Folder > ";
+const PROMPT: &str = "  Folder  ";
 
 #[allow(dead_code)]
 const PARAMS: &'static [&str] = &[

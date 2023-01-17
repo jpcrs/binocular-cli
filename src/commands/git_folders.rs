@@ -6,7 +6,7 @@ use crate::helper;
 const PREVIEW: &str = "bat --color=always {}README.md";
 
 #[allow(dead_code)]
-const PROMPT: &str = "Git > ";
+const PROMPT: &str = "  Git Folders  ";
 
 #[allow(dead_code)]
 const PARAMS: &'static [&str] = &[

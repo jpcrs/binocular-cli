@@ -3,10 +3,10 @@ use std::{path::PathBuf, process::Command};
 use crate::helper;
 
 #[allow(dead_code)]
-const PREVIEW: &str = "bat --color=always {1} --highlight-line {2}";
+const PREVIEW: &str = "bat --color=always {1} --highlight-line {2} --style=header,numbers";
 
 #[allow(dead_code)]
-const PROMPT: &str = "Grep > ";
+const PROMPT: &str = "  Grep  ";
 #[allow(dead_code)]
 
 const PARAMS: &'static [&str] = &[
@@ -14,7 +14,6 @@ const PARAMS: &'static [&str] = &[
     "--column",
     "--line-number",
     "--no-heading",
-    "--color=always",
     "--smart-case",
     "",
 ];
