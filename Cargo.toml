@@ -1,7 +1,11 @@
 [package]
+description = "FZF, ripgrep, fd and delta wrapper so it's easier for me to use these tools in multiple OSes. Not meant to be a serious library."
 name = "binocular-cli"
 version = "0.1.0"
 edition = "2021"
+license-file = "LICENSE.md"
+repository = "https://github.com/jpcrs/Binocular-cli"
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
