@@ -65,8 +65,6 @@ pub fn exec_fzf(file_content: &mut FileContent, file_name: &mut FileName, folder
         cli::EditorEnum::Insiders => open_editor::INSIDERS_APPEND_WINDOW
     };
 
-    println!("{}", helper::get_command_string(cmd));
-
     let std_out = cmd.spawn().unwrap().stdout.expect("Failed to get the command stdout");
     
     let mut args: Vec<&OsStr> = FZF_PARAMS.iter().map(|f| OsStr::new(f)).collect();

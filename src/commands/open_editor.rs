@@ -19,8 +19,6 @@ pub fn open_on_editor(stdout: &mut ChildStdout, cli: &ParsedCli) {
 
     let res = helper::get_file_and_line(selected);
 
-    println!("res: {}", res);
-
     let binding_code= &mut Command::new("code");
     let binding_insiders = &mut Command::new("code-insiders");
     let cmd = match cli.editor {
@@ -46,8 +44,6 @@ pub fn diff_on_editor(stdout: &mut ChildStdout, cli: &ParsedCli, original_file: 
     }
 
     let res = helper::get_file_only(selected);
-
-    println!("res: {}", res);
 
     let binding_code= &mut Command::new("code");
     let binding_insiders = &mut Command::new("code-insiders");
