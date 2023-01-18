@@ -1,5 +1,5 @@
 use clap::{Args, Parser};
-use std::{path::PathBuf, env};
+use std::{path::PathBuf, env, collections::HashSet};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -162,17 +162,26 @@ impl OpenOpt {
 
 impl Cli {
     pub fn build_paths(&self) -> Vec<PathBuf> {
-        let curr_path = env::current_dir().unwrap();
+        let mut set = HashSet::new();
         let mut final_paths: Vec<PathBuf> = vec![];
+
+        let curr_path = env::current_dir().unwrap();
+
         if let Some(paths) = &self.paths {
             for path in paths {
-                final_paths.push(path.to_path_buf());
+                if set.insert(path.to_path_buf()) {
+                    final_paths.push(path.to_path_buf());
+                }
             }
             return final_paths;
         }
+
         if let None = self.sub_commands {
-            final_paths.push(curr_path);
+            if set.insert(curr_path.to_path_buf()) {
+                final_paths.push(curr_path);
+            }
         }
+
         return final_paths;
     }
     
